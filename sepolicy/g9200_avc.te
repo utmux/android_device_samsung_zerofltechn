@@ -1,0 +1,37 @@
+# Keep these grants tied to accurately labelled G9200 nodes. Do not grant
+# device:chr_file or sysfs:file wholesale: those generic types cover unrelated
+# kernel interfaces too.
+
+# ERK2 RIL alarm/timer interface.
+allow rild legacy_alarm_device:chr_file rw_file_perms;
+
+# Samsung sensor stack and batch ioctl node.
+allow hal_sensors_default sensor_device:chr_file rw_file_perms;
+allow hal_sensors_default sysfs_sensors:dir r_dir_perms;
+allow hal_sensors_default sysfs_sensors:file rw_file_perms;
+
+# Samsung light HAL nodes are already labelled by the common device tree.
+allow hal_light_default sysfs_light_writable:dir search;
+allow hal_light_default sysfs_light_writable:file rw_file_perms;
+
+# Interactive governor and touch-key/backlight controls used by the power HAL.
+allow hal_power_default power_hal_sysfs:dir search;
+allow hal_power_default power_hal_sysfs:file rw_file_perms;
+allow hal_power_default sysfs_light_writable:dir search;
+allow hal_power_default sysfs_light_writable:file rw_file_perms;
+
+# The old kernel has no schedtune controller, so init creates this compatibility
+# tree on tmpfs. Zygote only needs to place processes in its tasks files.
+allow zygote cgroup:dir search;
+allow zygote cgroup:file w_file_perms;
+
+# ATFWD discovers the external modem through ESOC and checks mediaserver.
+r_dir_file(atfwd, sysfs_esoc)
+allow atfwd mediaserver_exec:file r_file_perms;
+
+# Android's memory accounting reads only these two debugfs subtrees.
+allow system_server debugfs_mali_mem:dir r_dir_perms;
+allow system_server debugfs_mali_mem:file r_file_perms;
+allow system_server debugfs_ion_clients:dir r_dir_perms;
+allow system_server debugfs_ion_clients:file r_file_perms;
+

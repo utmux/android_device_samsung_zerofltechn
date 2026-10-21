@@ -1,0 +1,15 @@
+# Directories below /dev/socket used by Samsung's Qualcomm QMUX stack.
+type qmuxd_socket, file_type;
+
+# MDM discovery and subsystem state exported through sysfs.
+type sysfs_esoc, sysfs_type, fs_type;
+type sysfs_ssr, sysfs_type, fs_type;
+type sysfs_hsic, sysfs_type, fs_type;
+
+# Local Unix-domain sockets used by Samsung radio helper daemons.
+type ddexe_socket, file_type;
+
+# Per-process GPU and ION accounting exported through debugfs.
+type debugfs_mali_mem, fs_type, debugfs_type;
+type debugfs_ion_clients, fs_type, debugfs_type;
+

@@ -1,0 +1,6 @@
+# Qualcomm voice services use the audio QMUX endpoint.
+qmux_socket(audioserver)
+allow audioserver ssr_device:chr_file r_file_perms;
+r_dir_file(audioserver, sysfs_esoc)
+r_dir_file(audioserver, sysfs_ssr)
+

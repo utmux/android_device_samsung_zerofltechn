@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FeatureSet>
+    <CscFeature_RIL_ConfigNetworkTypeCapability>CHC-CHC-GLB-CHN</CscFeature_RIL_ConfigNetworkTypeCapability>
+    <CscFeature_RIL_ConfigGlobalModuleType>CDMA-LTE</CscFeature_RIL_ConfigGlobalModuleType>
+    <CscFeature_RIL_SupportCSIM>true</CscFeature_RIL_SupportCSIM>
+    <CscFeature_RIL_SupportAllRat>true</CscFeature_RIL_SupportAllRat>
+</FeatureSet>

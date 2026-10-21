@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SM-G9200 supports both 3GPP and 3GPP2 radio families.  The ERK2 RIL
+     returns a successful GET_RADIO_CAPABILITY response with RAF=0, so the
+     telephony fallback must have the complete static capability set.
+-->
+<resources>
+    <string translatable="false" name="config_radio_access_family">LTE|CDMA|EVDO|GSM|WCDMA</string>
+</resources>

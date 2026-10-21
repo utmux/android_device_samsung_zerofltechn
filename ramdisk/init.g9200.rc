@@ -1,0 +1,10 @@
+# SM-G9200 uses the STM SSP sensor hub.  The shared zero-common lhd service is
+# for BBD-based variants and aborts when /dev/bbd_control is absent.
+on post-fs-data
+    # The Android 10 NXP HAL persists its configuration checksum and power
+    # accounting under /data/vendor/nfc.  The legacy common init only creates
+    # /data/nfc, leaving the HAL to reconfigure PN66T on every process restart.
+    mkdir /data/vendor/nfc 0770 nfc nfc
+    restorecon_recursive /data/vendor/nfc
+
+    stop lhd

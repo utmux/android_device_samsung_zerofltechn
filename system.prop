@@ -1,0 +1,23 @@
+#
+# Display
+#
+
+ro.sf.lcd_density=640
+
+# G9200/ERK2 uses a fixed two-slot Qualcomm MDM9635M configuration.  The
+# stock DTS intentionally leaves simslot_count disabled, so do not infer it
+# from /proc/simslot_count.
+ro.multisim.simslotcount=2
+ro.vendor.multisim.simslotcount=2
+persist.radio.multisim.config=dsds
+persist.multisim.config=dsds
+ro.use_data_netmgrd=false
+persist.radio.tdscdma_present=1
+telephony.lteOnCdmaDevice=1
+ro.telephony.default_network=9,1
+rild.libargs=-d /dev/smd0
+ril.subscription.types=NV,RUIM
+persist.radio.jbims=1
+persist.radio.sib16_support=0
+persist.radio.new.profid=true
+ro.radio.noril=no

@@ -1,0 +1,71 @@
+# ERK2 radio companion daemons started by init.baseband.rc.chn.
+type at_distributor, domain;
+type at_distributor_exec, exec_type, file_type;
+type atd_uart_device, dev_type;
+init_daemon_domain(at_distributor)
+qmux_socket(at_distributor)
+binder_use(at_distributor)
+wakelock_use(at_distributor)
+r_dir_file(at_distributor, sysfs_ssr)
+rild_unix_stream_socket(at_distributor)
+allow at_distributor self:{ udp_socket socket } create_socket_perms;
+allow at_distributor self:capability { setpcap setgid setuid fowner chown dac_override };
+allow at_distributor atd_uart_device:chr_file rw_file_perms;
+allow at_distributor proc:file r_file_perms;
+allow at_distributor mediaserver_exec:file { getattr open read };
+allow at_distributor diag_exec:file getattr;
+allow at_distributor app_efs_file:dir { r_dir_perms setattr };
+allow at_distributor app_efs_file:file { rw_file_perms setattr };
+allow at_distributor imei_efs_file:dir { r_dir_perms setattr };
+allow at_distributor imei_efs_file:file { r_file_perms setattr };
+allow at_distributor radio_data_file:dir rw_dir_perms;
+allow at_distributor radio_data_file:file create_file_perms;
+set_prop(at_distributor, radio_prop)
+
+# Samsung's RIL inspects the connecting AT distributor through procfs before
+# accepting its local socket connection.
+allow rild at_distributor:dir search;
+allow rild at_distributor:file { getattr open read };
+
+type ddexe, domain;
+type ddexe_exec, exec_type, file_type;
+init_daemon_domain(ddexe)
+qmux_socket(ddexe)
+binder_use(ddexe)
+r_dir_file(ddexe, sysfs_ssr)
+file_type_auto_trans(ddexe, system_data_file, ddexe_socket)
+allow ddexe self:{ udp_socket socket } create_socket_perms;
+allow ddexe self:capability { setpcap setgid setuid fowner chown dac_override };
+allow ddexe system_data_file:dir rw_dir_perms;
+allow ddexe ddexe_socket:sock_file { create unlink rw_file_perms };
+set_prop(ddexe, radio_prop)
+
+type connfwexe, domain;
+type connfwexe_exec, exec_type, file_type;
+init_daemon_domain(connfwexe)
+qmux_socket(connfwexe)
+binder_use(connfwexe)
+r_dir_file(connfwexe, sysfs_ssr)
+rild_unix_stream_socket(connfwexe)
+ddexe_unix_stream_socket(connfwexe)
+allow connfwexe ddexe_socket:sock_file { rw_file_perms setattr };
+allow connfwexe self:{ udp_socket socket } create_socket_perms;
+allow connfwexe self:capability { setpcap setgid setuid dac_override };
+set_prop(connfwexe, radio_prop)
+wakelock_use(connfwexe)
+
+type atfwd, domain;
+type atfwd_exec, exec_type, file_type;
+init_daemon_domain(atfwd)
+qmux_socket(atfwd)
+binder_use(atfwd)
+r_dir_file(atfwd, sysfs_ssr)
+allow atfwd self:{ udp_socket socket } create_socket_perms;
+set_prop(atfwd, radio_prop)
+
+type irsc_util, domain;
+type irsc_util_exec, exec_type, file_type;
+init_daemon_domain(irsc_util)
+allow irsc_util self:socket create_socket_perms;
+allow irsc_util system_file:file r_file_perms;
+

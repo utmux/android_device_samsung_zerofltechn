@@ -1,0 +1,18 @@
+type qmuxd, domain;
+type qmuxd_exec, exec_type, file_type;
+
+net_domain(qmuxd)
+init_daemon_domain(qmuxd)
+wakelock_use(qmuxd)
+
+qmux_socket(qmuxd)
+allow qmuxd { mhi_device hsic_device smem_log_device }:chr_file rw_file_perms;
+diag_use(qmuxd)
+
+r_dir_file(qmuxd, sysfs_esoc)
+r_dir_file(qmuxd, sysfs_ssr)
+allow qmuxd sysfs:file w_file_perms;
+
+allow qmuxd self:capability { setuid setgid setpcap dac_override };
+allow qmuxd self:socket create_socket_perms;
+

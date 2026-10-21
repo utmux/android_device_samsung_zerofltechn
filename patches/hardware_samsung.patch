@@ -1,0 +1,242 @@
+diff --git a/ril/libril/ril_service.cpp b/ril/libril/ril_service.cpp
+index 18bb278066be582cf5eb3a3ac79308f98f001159..cca929fb2b0f16ee6c911017a626f98c9a884841 100644
+--- a/ril/libril/ril_service.cpp
++++ b/ril/libril/ril_service.cpp
+@@ -25,6 +25,7 @@
+ #include <hidl/HidlTransportSupport.h>
+ #include <utils/SystemClock.h>
+ #include <inttypes.h>
++#include <string.h>
+ #include <cutils/properties.h>
+ 
+ #define ANDROID_ATOMIC_INLINE
+@@ -8471,47 +8472,43 @@ int radio::oemHookRawInd(int slotId,
+ 
+ void radio::registerService(RIL_RadioFunctions *callbacks, CommandInfo *commands) {
+     using namespace android::hardware;
+-    int simCount = 1;
+-    const char *serviceNames[] = {
+-            android::RIL_getServiceName()
+-            #if (SIM_COUNT >= 2)
+-            , RIL2_SERVICE_NAME
+-            #if (SIM_COUNT >= 3)
+-            , RIL3_SERVICE_NAME
+-            #if (SIM_COUNT >= 4)
+-            , RIL4_SERVICE_NAME
+-            #endif
+-            #endif
+-            #endif
+-            };
+-
++    // Samsung's universal7420 radio stack starts one rild process per SIM.
++    // rild's -c argument has already selected this process's HIDL service name
++    // (slot1 or slot2), so registering every compile-time SIM_COUNT instance
++    // here lets whichever process starts last steal the other process's slot.
++    const char *serviceName = android::RIL_getServiceName();
++    int slotId = 0;
+     #if (SIM_COUNT >= 2)
+-    simCount = SIM_COUNT;
++    if (!strcmp(serviceName, RIL2_SERVICE_NAME)) slotId = 1;
++    #if (SIM_COUNT >= 3)
++    if (!strcmp(serviceName, RIL3_SERVICE_NAME)) slotId = 2;
++    #if (SIM_COUNT >= 4)
++    if (!strcmp(serviceName, RIL4_SERVICE_NAME)) slotId = 3;
++    #endif
++    #endif
+     #endif
+ 
+     s_vendorFunctions = callbacks;
+     s_commands = commands;
+ 
+     configureRpcThreadpool(1, true /* callerWillJoin */);
+-    for (int i = 0; i < simCount; i++) {
+-        pthread_rwlock_t *radioServiceRwlockPtr = getRadioServiceRwlock(i);
+-        int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
+-        assert(ret == 0);
+-
+-        radioService[i] = new RadioImpl;
+-        radioService[i]->mSlotId = i;
+-        RLOGD("registerService: starting IRadio %s", serviceNames[i]);
+-        android::status_t status = radioService[i]->registerAsService(serviceNames[i]);
++    pthread_rwlock_t *radioServiceRwlockPtr = getRadioServiceRwlock(slotId);
++    int ret = pthread_rwlock_wrlock(radioServiceRwlockPtr);
++    assert(ret == 0);
+ 
+-        if (kOemHookEnabled) {
+-            oemHookService[i] = new OemHookImpl;
+-            oemHookService[i]->mSlotId = i;
+-            status = oemHookService[i]->registerAsService(serviceNames[i]);
+-        }
++    radioService[slotId] = new RadioImpl;
++    radioService[slotId]->mSlotId = slotId;
++    RLOGD("registerService: starting IRadio %s for slotId %d", serviceName, slotId);
++    android::status_t status = radioService[slotId]->registerAsService(serviceName);
+ 
+-        ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
+-        assert(ret == 0);
++    if (kOemHookEnabled) {
++        oemHookService[slotId] = new OemHookImpl;
++        oemHookService[slotId]->mSlotId = slotId;
++        status = oemHookService[slotId]->registerAsService(serviceName);
+     }
++
++    ret = pthread_rwlock_unlock(radioServiceRwlockPtr);
++    assert(ret == 0);
+ }
+ 
+ void rilc_thread_pool() {
+diff --git a/ril/libril/sap_service.cpp b/ril/libril/sap_service.cpp
+index 962d564db5806041cda3a89c7d4a03d516907864..e20ea7e552c45de1ba93182ac45838a247942f52 100644
+--- a/ril/libril/sap_service.cpp
++++ b/ril/libril/sap_service.cpp
+@@ -21,6 +21,7 @@
+ #include <hwbinder/IPCThreadState.h>
+ #include <hwbinder/ProcessState.h>
+ #include <sap_service.h>
++#include <string.h>
+ #include "pb_decode.h"
+ #include "pb_encode.h"
+ 
+@@ -918,42 +919,35 @@ void sap::processUnsolResponse(MsgHeader *rsp, RilSapSocket *sapSocket) {
+ 
+ void sap::registerService(const RIL_RadioFunctions *callbacks) {
+     using namespace android::hardware;
+-    int simCount = 1;
+-    const char *serviceNames[] = {
+-        android::RIL_getServiceName()
+-        #if (SIM_COUNT >= 2)
+-        , RIL2_SERVICE_NAME
+-        #if (SIM_COUNT >= 3)
+-        , RIL3_SERVICE_NAME
+-        #if (SIM_COUNT >= 4)
+-        , RIL4_SERVICE_NAME
+-        #endif
+-        #endif
+-        #endif
+-    };
+-
+-    RIL_SOCKET_ID socketIds[] = {
+-        RIL_SOCKET_1
+-        #if (SIM_COUNT >= 2)
+-        , RIL_SOCKET_2
+-        #if (SIM_COUNT >= 3)
+-        , RIL_SOCKET_3
+-        #if (SIM_COUNT >= 4)
+-        , RIL_SOCKET_4
+-        #endif
+-        #endif
+-        #endif
+-    };
++    // universal7420 uses one rild per SIM.  The -c argument selects this
++    // process's service name; exposing all SIM_COUNT services from each rild
++    // causes slot ownership to change whenever either process restarts.
++    const char *serviceName = android::RIL_getServiceName();
++    int slotId = 0;
++    RIL_SOCKET_ID socketId = RIL_SOCKET_1;
+     #if (SIM_COUNT >= 2)
+-    simCount = SIM_COUNT;
++    if (!strcmp(serviceName, RIL2_SERVICE_NAME)) {
++        slotId = 1;
++        socketId = RIL_SOCKET_2;
++    }
++    #if (SIM_COUNT >= 3)
++    if (!strcmp(serviceName, RIL3_SERVICE_NAME)) {
++        slotId = 2;
++        socketId = RIL_SOCKET_3;
++    }
++    #if (SIM_COUNT >= 4)
++    if (!strcmp(serviceName, RIL4_SERVICE_NAME)) {
++        slotId = 3;
++        socketId = RIL_SOCKET_4;
++    }
++    #endif
++    #endif
+     #endif
+ 
+-    for (int i = 0; i < simCount; i++) {
+-        sapService[i] = new SapImpl;
+-        sapService[i]->slotId = i;
+-        sapService[i]->rilSocketId = socketIds[i];
+-        RLOGD("registerService: starting ISap %s for slotId %d", serviceNames[i], i);
+-        android::status_t status = sapService[i]->registerAsService(serviceNames[i]);
+-        RLOGD("registerService: started ISap %s status %d", serviceNames[i], status);
+-    }
++    sapService[slotId] = new SapImpl;
++    sapService[slotId]->slotId = slotId;
++    sapService[slotId]->rilSocketId = socketId;
++    RLOGD("registerService: starting ISap %s for slotId %d", serviceName, slotId);
++    android::status_t status = sapService[slotId]->registerAsService(serviceName);
++    RLOGD("registerService: started ISap %s status %d", serviceName, status);
+ }
+diff --git a/ril/libsecril-client/secril-client.cpp b/ril/libsecril-client/secril-client.cpp
+index 194d5905fa75c408a5559a89ebd2206ed8665124..87663676f7a4c8283f59b779ef58148962221065 100755
+--- a/ril/libsecril-client/secril-client.cpp
++++ b/ril/libsecril-client/secril-client.cpp
+@@ -149,6 +149,7 @@ typedef struct _RilClientPrv {
+     RilOnError      err_cb;         // error callback
+     void            *err_cb_data;   // error callback data
+     uint8_t b_del_handler;
++    void            *client_data;   // opaque caller-owned context
+ } RilClientPrv;
+ 
+ 
+@@ -317,6 +318,41 @@ int RegisterErrorCallback(HRilClient client, RilOnError cb, void *data) {
+ }
+ 
+ 
++/**
++ * Store an opaque caller-owned context pointer on a client handle.
++ *
++ * Samsung's ERK2 at_distributor uses this private extension to associate its
++ * callback with each RIL client.  The stock implementation ignores len and
++ * returns 1 on success, so preserve that ABI exactly.
++ */
++extern "C"
++int SetClientData(HRilClient client, void *data, size_t len) {
++    (void)len;
++
++    if (client == NULL || client->prv == NULL) {
++        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
++        return RIL_CLIENT_ERR_INVAL;
++    }
++
++    ((RilClientPrv *)(client->prv))->client_data = data;
++    return 1;
++}
++
++
++/**
++ * Retrieve the opaque context installed by SetClientData().
++ */
++extern "C"
++void *GetClientData(HRilClient client) {
++    if (client == NULL || client->prv == NULL) {
++        RLOGE("%s: Invalid client %p", __FUNCTION__, client);
++        return NULL;
++    }
++
++    return ((RilClientPrv *)(client->prv))->client_data;
++}
++
++
+ /**
+  * @fn  HRilClient OpenClient_RILD(void)
+  *
+diff --git a/ril/libsecril-client/secril-client.h b/ril/libsecril-client/secril-client.h
+index 4c4c2b006345768e0d528910a9eaf8b391db1582..dadf8888450218efd453f0091bd8f3ab44c07a1a 100755
+--- a/ril/libsecril-client/secril-client.h
++++ b/ril/libsecril-client/secril-client.h
+@@ -117,6 +117,13 @@ int RegisterRequestCompleteHandler(HRilClient client, uint32_t id, RilOnComplete
+  */
+ int RegisterErrorCallback(HRilClient client, RilOnError cb, void *data);
+ 
++/**
++ * Store and retrieve an opaque caller-owned context on a client handle.
++ * These are Samsung private extensions used by G9200's at_distributor.
++ */
++int SetClientData(HRilClient client, void *data, size_t len);
++void *GetClientData(HRilClient client);
++
+ /**
+  * Invoke OEM request. Request ID is RIL_REQUEST_OEM_HOOK_RAW.
+  * Return is 0 or error code. For RIL_CLIENT_ERR_AGAIN caller should retry.

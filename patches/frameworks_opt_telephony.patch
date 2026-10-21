@@ -1,0 +1,14 @@
+diff --git a/src/java/com/android/internal/telephony/RadioResponse.java b/src/java/com/android/internal/telephony/RadioResponse.java
+index 97fe3dc13a5ba545aa889ad188d74548181ebc2c..91c7afcfe1cbdad51f2520f3cb71e1ad530c34f0 100644
+--- a/src/java/com/android/internal/telephony/RadioResponse.java
++++ b/src/java/com/android/internal/telephony/RadioResponse.java
+@@ -1286,7 +1286,8 @@ public class RadioResponse extends IRadioResponse.Stub {
+         if (rr != null) {
+             RadioCapability ret = RIL.convertHalRadioCapability(rc, mRil);
+             if (responseInfo.error == RadioError.REQUEST_NOT_SUPPORTED
+-                    || responseInfo.error == RadioError.GENERIC_FAILURE) {
++                    || responseInfo.error == RadioError.GENERIC_FAILURE
++                    || ret.getRadioAccessFamily() == RadioAccessFamily.RAF_UNKNOWN) {
+                 // we should construct the RAF bitmask the radio
+                 // supports based on preferred network bitmasks
+                 ret = mRil.makeStaticRadioCapability();

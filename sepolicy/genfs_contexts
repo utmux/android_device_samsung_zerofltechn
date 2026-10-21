@@ -1,0 +1,4 @@
+# Narrow labels for the memory accounting files read by system_server.
+genfscon debugfs /mali/mem    u:object_r:debugfs_mali_mem:s0
+genfscon debugfs /ion/clients u:object_r:debugfs_ion_clients:s0
+

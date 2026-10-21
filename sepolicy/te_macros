@@ -1,0 +1,25 @@
+#####################################
+# qmux_socket(clientdomain)
+# Connect to qmuxd and create a per-client socket below a QMUX directory.
+define(`qmux_socket', `
+allow $1 qmuxd_socket:dir create_dir_perms;
+unix_socket_connect($1, qmuxd, qmuxd)
+allow $1 qmuxd_socket:sock_file { read getattr write setattr create unlink };
+')
+
+#####################################
+# diag_use(clientdomain)
+define(`diag_use', `
+allow $1 diag_device:chr_file rw_file_perms;
+')
+
+define(`rild_unix_stream_socket', `
+allow $1 rild:unix_stream_socket connectto;
+allow $1 rild:unix_stream_socket { getattr getopt ioctl read write shutdown };
+')
+
+define(`ddexe_unix_stream_socket', `
+allow $1 ddexe:unix_stream_socket connectto;
+allow $1 ddexe:unix_stream_socket { getattr getopt ioctl read write shutdown };
+')
+

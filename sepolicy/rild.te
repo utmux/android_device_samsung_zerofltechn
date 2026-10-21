@@ -1,0 +1,7 @@
+# The ERK2 RILs exchange QMI frames with qmuxd through per-client sockets.
+qmux_socket(rild)
+allow rild ssr_device:chr_file r_file_perms;
+r_dir_file(rild, sysfs_esoc)
+r_dir_file(rild, sysfs_ssr)
+diag_use(rild)
+
