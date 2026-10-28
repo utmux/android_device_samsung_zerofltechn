@@ -1,0 +1,1 @@
+allow init sysfs_charging_control:file rw_file_perms;

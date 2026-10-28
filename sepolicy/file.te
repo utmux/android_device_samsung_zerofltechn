@@ -5,6 +5,7 @@ type qmuxd_socket, file_type;
 type sysfs_esoc, sysfs_type, fs_type;
 type sysfs_ssr, sysfs_type, fs_type;
 type sysfs_hsic, sysfs_type, fs_type;
+type sysfs_charging_control, sysfs_type, fs_type;
 
 # Local Unix-domain sockets used by Samsung radio helper daemons.
 type ddexe_socket, file_type;

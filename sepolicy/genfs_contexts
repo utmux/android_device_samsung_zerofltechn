@@ -2,3 +2,8 @@
 genfscon debugfs /mali/mem    u:object_r:debugfs_mali_mem:s0
 genfscon debugfs /ion/clients u:object_r:debugfs_ion_clients:s0
 
+# Charging control nodes written by init from persistent Settings properties.
+genfscon sysfs /devices/battery.52/power_supply/battery/charge_control_enabled u:object_r:sysfs_charging_control:s0
+genfscon sysfs /devices/battery.52/power_supply/battery/charge_control_start_threshold u:object_r:sysfs_charging_control:s0
+genfscon sysfs /devices/battery.52/power_supply/battery/charge_control_end_threshold u:object_r:sysfs_charging_control:s0
+genfscon sysfs /devices/battery.52/power_supply/battery/bypass_charging u:object_r:sysfs_charging_control:s0
