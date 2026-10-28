@@ -20,6 +20,9 @@ allow hal_power_default power_hal_sysfs:file rw_file_perms;
 allow hal_power_default sysfs_light_writable:dir search;
 allow hal_power_default sysfs_light_writable:file rw_file_perms;
 
+# Board init owns and configures nodes shared with the power HAL.
+allow init power_hal_sysfs:file { rw_file_perms setattr };
+
 # The old kernel has no schedtune controller, so init creates this compatibility
 # tree on tmpfs. Zygote only needs to place processes in its tasks files.
 allow zygote cgroup:dir search;
@@ -94,3 +97,7 @@ dontaudit { platform_app system_app } debugfs_ion_clients:file r_file_perms;
 
 # SurfaceFlinger reads the Exynos display status exported beside vsync.
 allow surfaceflinger sysfs_vsync:file r_file_perms;
+
+# Every process' dynamic linker probes the mediaserver path while parsing the
+# device-wide stagefright shim. Access failure is expected for other domains.
+dontaudit domain mediaserver_exec:file { getattr open read };
