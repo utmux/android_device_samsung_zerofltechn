@@ -6,6 +6,11 @@ type sysfs_esoc, sysfs_type, fs_type;
 type sysfs_ssr, sysfs_type, fs_type;
 type sysfs_hsic, sysfs_type, fs_type;
 type sysfs_charging_control, sysfs_type, fs_type;
+type sysfs_touchscreen, sysfs_type, fs_type;
+type sysfs_key_wakeup, sysfs_type, fs_type;
+type proc_irq_affinity, proc_type, fs_type;
+type vendor_nfc_data_file, file_type, data_file_type;
+type wifi_conn_data_file, file_type, data_file_type;
 
 # Local Unix-domain sockets used by Samsung radio helper daemons.
 type ddexe_socket, file_type;

@@ -35,3 +35,62 @@ allow system_server debugfs_mali_mem:file r_file_perms;
 allow system_server debugfs_ion_clients:dir r_dir_perms;
 allow system_server debugfs_ion_clients:file r_file_perms;
 
+# The Lineage touch HAL uses the touchscreen command list and shares the
+# input enable node with the power HAL.
+allow hal_lineage_touch_default sysfs_touchscreen:dir search;
+allow hal_lineage_touch_default sysfs_touchscreen:file r_file_perms;
+allow hal_lineage_touch_default power_hal_sysfs:dir search;
+allow hal_lineage_touch_default power_hal_sysfs:file rw_file_perms;
+
+# irqbalance still runs in init's domain on this legacy device. Label only the
+# /proc/irq subtree instead of allowing init to write generic proc files.
+allow init proc_irq_affinity:dir r_dir_perms;
+allow init proc_irq_affinity:file rw_file_perms;
+allow init proc_interrupts:file r_file_perms;
+
+# Board init configures the hardware-key wake mask.
+allow init sysfs_key_wakeup:file { rw_file_perms setattr };
+
+# Samsung RIL probes servicemanager and the cmdlines of its helper daemons.
+binder_use(rild)
+allow rild mediaserver_exec:file r_file_perms;
+allow rild { init connfwexe }:dir r_dir_perms;
+allow rild { init connfwexe }:file r_file_perms;
+
+# NXP NFC keeps its vendor HAL state separate from the framework NFC database.
+allow hal_nfc_default vendor_nfc_data_file:dir create_dir_perms;
+allow hal_nfc_default vendor_nfc_data_file:file create_file_perms;
+allow nfc vendor_nfc_data_file:dir create_dir_perms;
+allow nfc vendor_nfc_data_file:file create_file_perms;
+allow vendor_init vendor_nfc_data_file:dir create_dir_perms;
+allow vendor_init vendor_nfc_data_file:file create_file_perms;
+
+# Samsung's Wi-Fi HAL reads its EFS MAC and maintains control flags under
+# /data/misc/conn.
+allow hal_wifi_default efs_file:dir search;
+allow hal_wifi_default wifi_efs_file:dir search;
+allow hal_wifi_default wifi_efs_file:file rw_file_perms;
+allow hal_wifi_default wifi_conn_data_file:dir r_dir_perms;
+allow hal_wifi_default wifi_conn_data_file:file rw_file_perms;
+allow vendor_init wifi_conn_data_file:dir create_dir_perms;
+allow vendor_init wifi_conn_data_file:file create_file_perms;
+
+# The camera service reads calibration/version state written by the stock HAL.
+allow cameraserver camera_data_file:dir search;
+allow cameraserver camera_data_file:file r_file_perms;
+
+# Native memory accounting can read only the labelled Mali and ION subtrees.
+allow { surfaceflinger bootanim } debugfs_mali_mem:dir r_dir_perms;
+allow { surfaceflinger bootanim } debugfs_mali_mem:file r_file_perms;
+allow { surfaceflinger bootanim mediacodec hal_graphics_allocator_default cameraserver } debugfs_ion_clients:dir r_dir_perms;
+allow { surfaceflinger bootanim mediacodec hal_graphics_allocator_default cameraserver } debugfs_ion_clients:file r_file_perms;
+
+# GPU/ION accounting probes from app processes are optional. Do not expose
+# debugfs to applications merely to silence their failed probes.
+dontaudit { platform_app system_app } debugfs_mali_mem:dir r_dir_perms;
+dontaudit { platform_app system_app } debugfs_mali_mem:file r_file_perms;
+dontaudit { platform_app system_app } debugfs_ion_clients:dir r_dir_perms;
+dontaudit { platform_app system_app } debugfs_ion_clients:file r_file_perms;
+
+# SurfaceFlinger reads the Exynos display status exported beside vsync.
+allow surfaceflinger sysfs_vsync:file r_file_perms;

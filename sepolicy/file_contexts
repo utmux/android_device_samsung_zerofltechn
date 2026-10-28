@@ -20,7 +20,10 @@
 # G9200 NFC controller and embedded secure element.
 /dev/pn547                            u:object_r:nfc_device:s0
 /dev/p61                              u:object_r:nfc_device:s0
-/data/vendor/nfc(/.*)?               u:object_r:nfc_data_file:s0
+/data/vendor/nfc(/.*)?               u:object_r:vendor_nfc_data_file:s0
+
+# Samsung Wi-Fi control and diagnostic flags.
+/data/misc/conn(/.*)?                u:object_r:wifi_conn_data_file:s0
 /dev/alarm                            u:object_r:legacy_alarm_device:s0
 /dev/batch_io                         u:object_r:sensor_device:s0
 /dev/vfsspi                           u:object_r:fingerprint_device:s0
