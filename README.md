@@ -14,10 +14,11 @@ Android 10 bring-up for the Chinese dual-SIM Galaxy S6, codename
 | `kernel/samsung/universal7420` | `utmux/android_kernel_samsung_universal7420` |
 
 The device tree also carries the small LineageOS 17.1 source patches required
-for the G9200 radio stack:
+for the G9200 radio and legacy Exynos media stacks:
 
 - `patches/frameworks_opt_telephony.patch`
 - `patches/hardware_samsung.patch`
+- `patches/hardware_samsung_slsi_openmax.patch`
 
 Apply them from the Android source root before building:
 
@@ -26,6 +27,8 @@ git -C frameworks/opt/telephony apply \
     "$PWD/device/samsung/zerofltechn/patches/frameworks_opt_telephony.patch"
 git -C hardware/samsung apply \
     "$PWD/device/samsung/zerofltechn/patches/hardware_samsung.patch"
+git -C hardware/samsung_slsi/openmax apply \
+    "$PWD/device/samsung/zerofltechn/patches/hardware_samsung_slsi_openmax.patch"
 ```
 
 ## Build
@@ -44,15 +47,13 @@ mka bacon -j4
 - Wi-Fi, Bluetooth and audio
 - Light, proximity, pressure and other sensors
 - NXP PN66T NFC, including off/on cycles
+- Exynos H.264 Surface hardware decoding, including PiliPlus `mediacodec`
+  direct output
 
 ## Known limitations
 
 - SELinux is permissive.
 - China Mobile VoLTE has not been tested.
-- The legacy Exynos 7420 OMX blobs do not support Android 10's
-  `DynamicANWBuffer` direct-output path. FFmpeg/mpv applications such as
-  PiliPlus must use `mediacodec-copy` or software decoding instead of direct
-  `mediacodec` output.
 
 ## Notes
 

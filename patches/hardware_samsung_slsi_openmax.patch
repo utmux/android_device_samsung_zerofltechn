@@ -1,0 +1,17 @@
+diff --git a/component/video/dec/h264/Exynos_OMX_H264dec.c b/component/video/dec/h264/Exynos_OMX_H264dec.c
+index c8d42e6..c5230a5 100644
+--- a/component/video/dec/h264/Exynos_OMX_H264dec.c
++++ b/component/video/dec/h264/Exynos_OMX_H264dec.c
+@@ -3094,2 +3094,12 @@ OMX_ERRORTYPE Exynos_H264Dec_dstInputBufferProcess(OMX_COMPONENTTYPE *pOMXCompon
+         }
++    } else if ((pDstInputData->bufferHeader != NULL) &&
++               (!CHECK_PORT_BEING_FLUSHED(pExynosOutputPort)) &&
++               (pVideoDec->bExitBufferProcessThread == OMX_FALSE)) {
++        /*
++         * DstInput has already dequeued and converted this OMX buffer.
++         * Preserve it until SrcIn finishes H264CodecDstSetup so the generic
++         * loop retries without another GETQ, conversion or ANB ref increase.
++         */
++        ret = (OMX_ERRORTYPE)OMX_ErrorOutputBufferUseYet;
++        Exynos_OSAL_SleepMillisec(1);
+     }
