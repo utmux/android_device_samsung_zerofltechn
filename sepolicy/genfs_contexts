@@ -4,6 +4,8 @@ genfscon proc /irq u:object_r:proc_irq_affinity:s0
 # Health, power, touch, sensor and display nodes on the G9200 kernel.
 genfscon sysfs /devices/battery.52/power_supply/battery/capacity u:object_r:sysfs_batteryinfo:s0
 genfscon sysfs /devices/battery.52/power_supply/battery/voltage_now u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/battery.52/power_supply/battery/temp u:object_r:sysfs_batteryinfo:s0
+genfscon sysfs /devices/battery.52/power_supply/ac/type u:object_r:sysfs_batteryinfo:s0
 genfscon sysfs /devices/14e10000.hsi2c/i2c-6/6-0049/input/input1/enabled u:object_r:power_hal_sysfs:s0
 genfscon sysfs /devices/14e70000.hsi2c/i2c-2/2-0020/input/input0/enabled u:object_r:power_hal_sysfs:s0
 genfscon sysfs /devices/virtual/sec/tsp/cmd_list u:object_r:sysfs_touchscreen:s0

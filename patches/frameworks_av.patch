@@ -1,0 +1,78 @@
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index 81d393683a44a573e7286566f95402bb531817d4..b07c1a81be08354720ee1dee7b1cdd7b8e48e03e 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -20,6 +20,8 @@
+ #include <utils/Log.h>
+ 
+ #include <inttypes.h>
++#include <string.h>
++#include <unistd.h>
+ 
+ #include <media/stagefright/omx/OMXNodeInstance.h>
+ #include <media/stagefright/omx/OMXMaster.h>
+@@ -32,6 +34,7 @@
+ #include <media/openmax/OMX_AsString.h>
+ 
+ #include <binder/IMemory.h>
++#include <cutils/native_handle.h>
+ #include <cutils/properties.h>
+ #include <media/hardware/HardwareAPI.h>
+ #include <media/stagefright/foundation/ADebug.h>
+@@ -1625,10 +1628,54 @@ status_t OMXNodeInstance::allocateSecureBuffer(
+     CHECK_EQ(header->pAppPrivate, buffer_meta);
+ 
+     *buffer = makeBufferID(header);
+-    if (mSecureBufferType[portIndex] == kSecureBufferTypeNativeHandle) {
++
++    // Legacy Exynos secure decoders return an ION fd in pBuffer, while the
++    // Android 10 HIDL OMX path requires a native_handle_t destination.
++    const bool exynosSecureFd =
++            (portIndex == kPortIndexInput) &&
++            (mName != nullptr) &&
++            (strcmp(mName, "Exynos.avc.dec.secure") == 0) &&
++            (mSecureBufferType[portIndex] == kSecureBufferTypeOpaque);
++
++    if (exynosSecureFd) {
++        const int fd = static_cast<int>(
++                reinterpret_cast<intptr_t>(header->pBuffer));
++        const int passFd = dup(fd);
++        native_handle_t *nh =
++                passFd >= 0 ? native_handle_create(1, 0) : nullptr;
++
++        if (nh != nullptr) {
++            nh->data[0] = passFd;
++        }
++
++        sp<NativeHandle> wrappedHandle = NativeHandle::create(
++                nh, true /* ownsHandle */);
++        if (wrappedHandle == nullptr) {
++            if (nh != nullptr) {
++                native_handle_close(nh);
++                native_handle_delete(nh);
++            } else if (passFd >= 0) {
++                close(passFd);
++            }
++
++            invalidateBufferID(*buffer);
++            OMX_ERRORTYPE freeErr = OMX_FreeBuffer(
++                    mHandle, portIndex, header);
++            CLOG_IF_ERROR(freeBuffer, freeErr, "%s:%u %#x",
++                          portString(portIndex), portIndex, *buffer);
++            delete buffer_meta;
++            *buffer = 0;
++            return NO_MEMORY;
++        }
++
++        *buffer_data = nullptr;
++        *native_handle = wrappedHandle;
++    } else if (mSecureBufferType[portIndex] ==
++               kSecureBufferTypeNativeHandle) {
+         *buffer_data = NULL;
+         *native_handle = NativeHandle::create(
+-                (native_handle_t *)header->pBuffer, false /* ownsHandle */);
++                (native_handle_t *)header->pBuffer,
++                false /* ownsHandle */);
+     } else {
+         *buffer_data = header->pBuffer;
+         *native_handle = NULL;
